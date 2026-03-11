@@ -9,7 +9,7 @@ use pocketmine\Server;
 
 class Main extends PluginBase{
 
-    private int $bossId = 12345;
+    private int $bossId = 123456;
     private int $messageIndex = 0;
 
     protected function onEnable() : void{
@@ -37,9 +37,9 @@ class Main extends PluginBase{
             $pk = BossEventPacket::show(
                 $this->bossId,
                 $text,
-                1.0,
-                BossEventPacket::COLOR_PURPLE,
-                BossEventPacket::OVERLAY_PROGRESS
+                1.0,   // progress (100%)
+                0,     // color (purple)
+                0      // overlay (progress)
             );
 
             $player->getNetworkSession()->sendDataPacket($pk);
