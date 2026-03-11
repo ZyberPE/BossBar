@@ -5,18 +5,19 @@ namespace BossBar;
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\player\Player;
+use pocketmine\entity\EntityDataHelper;
+use pocketmine\entity\EntityFactory;
+use pocketmine\entity\Location;
+use pocketmine\entity\Entity;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\world\World;
+use pocketmine\Server;
 
-use pocketmine\network\mcpe\protocol\AddActorPacket;
-use pocketmine\network\mcpe\protocol\RemoveActorPacket;
-
-use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
-use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
-use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
-use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags;
+use pocketmine\entity\Living;
 
 class Main extends PluginBase{
 
-    private int $entityId = 987654;
+    private array $dragons = [];
     private int $messageIndex = 0;
 
     protected function onEnable() : void{
@@ -33,10 +34,6 @@ class Main extends PluginBase{
 
         $messages = $this->getConfig()->get("messages");
 
-        if(empty($messages)){
-            return;
-        }
-
         if(!isset($messages[$this->messageIndex])){
             $this->messageIndex = 0;
         }
@@ -46,45 +43,35 @@ class Main extends PluginBase{
 
         $text = $top . "\n" . $bottom;
 
-        foreach($this->getServer()->getOnlinePlayers() as $player){
-            $this->removeBossBar($player);
-            $this->sendBossBar($player, $text);
+        foreach(Server::getInstance()->getOnlinePlayers() as $player){
+            $this->spawnDragon($player, $text);
         }
 
         $this->messageIndex++;
     }
 
-    private function sendBossBar(Player $player, string $text) : void{
+    private function spawnDragon(Player $player, string $text) : void{
 
-        $metadata = new EntityMetadataCollection();
-        $metadata->setString(EntityMetadataProperties::NAMETAG, $text);
-        $metadata->setLong(EntityMetadataProperties::FLAGS, 1 << EntityMetadataFlags::SILENT);
-        $metadata->setFloat(EntityMetadataProperties::HEALTH, 200);
+        if(isset($this->dragons[$player->getName()])){
+            $dragon = $this->dragons[$player->getName()];
+            if($dragon instanceof Entity && !$dragon->isClosed()){
+                $dragon->setNameTag($text);
+                return;
+            }
+        }
 
-        $pk = new AddActorPacket();
+        $pos = $player->getPosition()->add(0, 100, 0);
 
-        $pk->actorUniqueId = $this->entityId;
-        $pk->actorRuntimeId = $this->entityId;
-        $pk->type = EntityIds::ENDER_DRAGON;
+        $nbt = EntityDataHelper::createBaseNBT($pos);
 
-        $pk->position = $player->getPosition();
-        $pk->motion = null;
+        $dragon = EntityFactory::getInstance()->create("minecraft:ender_dragon", $pos->getWorld(), $nbt);
 
-        $pk->yaw = 0;
-        $pk->pitch = 0;
-        $pk->headYaw = 0;
+        if($dragon !== null){
+            $dragon->setNameTag($text);
+            $dragon->setNameTagAlwaysVisible();
+            $dragon->spawnTo($player);
 
-        $pk->metadata = $metadata->getAll();
-        $pk->syncedProperties = []; // REQUIRED FOR API 5
-
-        $player->getNetworkSession()->sendDataPacket($pk);
-    }
-
-    private function removeBossBar(Player $player) : void{
-
-        $pk = new RemoveActorPacket();
-        $pk->actorUniqueId = $this->entityId;
-
-        $player->getNetworkSession()->sendDataPacket($pk);
+            $this->dragons[$player->getName()] = $dragon;
+        }
     }
 }
