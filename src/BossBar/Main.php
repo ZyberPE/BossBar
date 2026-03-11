@@ -16,7 +16,7 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags;
 
 class Main extends PluginBase{
 
-    private int $entityId = 999999;
+    private int $entityId = 987654;
     private int $messageIndex = 0;
 
     protected function onEnable() : void{
@@ -57,7 +57,6 @@ class Main extends PluginBase{
     private function sendBossBar(Player $player, string $text) : void{
 
         $metadata = new EntityMetadataCollection();
-
         $metadata->setString(EntityMetadataProperties::NAMETAG, $text);
         $metadata->setLong(EntityMetadataProperties::FLAGS, 1 << EntityMetadataFlags::SILENT);
         $metadata->setFloat(EntityMetadataProperties::HEALTH, 200);
@@ -76,6 +75,7 @@ class Main extends PluginBase{
         $pk->headYaw = 0;
 
         $pk->metadata = $metadata->getAll();
+        $pk->syncedProperties = []; // REQUIRED FOR API 5
 
         $player->getNetworkSession()->sendDataPacket($pk);
     }
