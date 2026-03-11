@@ -1,11 +1,6 @@
 update-time: 5
 
 messages:
-  - top: "§6ZyberPE Network"
-    bottom: "§fWelcome to the server"
-
-  - top: "§bStore"
-    bottom: "§fstore.example.com"
-
-  - top: "§aDiscord"
-    bottom: "§fJoin our community"
+  - "§6ZyberPE Network\n§fWelcome to the server"
+  - "§bStore\n§fstore.example.com"
+  - "§aDiscord\n§fJoin our community"
